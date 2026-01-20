@@ -7,6 +7,7 @@
 """
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from django.utils import timezone
 from typing import Optional
 
 
@@ -41,7 +42,8 @@ class TimeSlotEntity:
 
     def is_in_past(self, current_time: Optional[datetime] = None) -> bool:
         if current_time is None:
-            current_time = datetime.now()
+            # use Django timezone-aware now to avoid mixing naive/aware datetimes
+            current_time = timezone.now()
 
         return self.start_time < current_time
 

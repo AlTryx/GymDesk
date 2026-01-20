@@ -10,6 +10,7 @@ class ResourceEntity:
     max_bookings: int
     color_code: str
     created_at: Optional[datetime] = None
+    owner_id: Optional[int] = None
 
     def __post_init__(self):
         self._validate()

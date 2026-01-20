@@ -18,6 +18,9 @@ class User(AbstractUser):
 
 
 class Resource(models.Model):
+    # Owner of the resource; nullable to allow existing resources to remain global
+    # and to ease migration. In the future you may want to make this non-nullable.
+    owner = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True, related_name='resources')
     name = models.CharField(max_length=200)
     type = models.CharField(
         max_length=20,

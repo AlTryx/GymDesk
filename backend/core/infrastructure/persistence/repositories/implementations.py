@@ -11,6 +11,7 @@ from core.domain.entities.resource import ResourceEntity
 from core.domain.entities.timeslot import TimeSlotEntity
 from core.domain.entities.reservation import ReservationEntity
 from core.models import User, Resource, TimeSlot, Reservation
+from django.db import IntegrityError
 
 
 class UserRepository(UserRepositoryInterface):
@@ -79,7 +80,8 @@ class ResourceRepository(ResourceRepositoryInterface):
             name=entity.name,
             type=entity.type,
             max_bookings=entity.max_bookings,
-            color_code=entity.color_code
+            color_code=entity.color_code,
+            owner_id=entity.owner_id if hasattr(entity, 'owner_id') else None
         )
         return self._to_entity(resource)
 
@@ -90,10 +92,12 @@ class ResourceRepository(ResourceRepositoryInterface):
         except Resource.DoesNotExist:
             return None
 
-    def list_all(self, type_filter: Optional[str] = None) -> List[ResourceEntity]:
+    def list_all(self, type_filter: Optional[str] = None, owner_id: Optional[int] = None) -> List[ResourceEntity]:
         queryset = Resource.objects.all()
         if type_filter:
             queryset = queryset.filter(type=type_filter)
+        if owner_id is not None:
+            queryset = queryset.filter(owner_id=owner_id)
         return [self._to_entity(r) for r in queryset]
 
     def update(self, entity: ResourceEntity) -> ResourceEntity:
@@ -119,20 +123,33 @@ class ResourceRepository(ResourceRepositoryInterface):
             type=model.type,
             max_bookings=model.max_bookings,
             color_code=model.color_code,
-            created_at=model.created_at
+            created_at=model.created_at,
+            owner_id=getattr(model, 'owner_id', None)
         )
 
 
 class TimeSlotRepository(TimeSlotRepositoryInterface):
 
     def create(self, entity: TimeSlotEntity) -> TimeSlotEntity:
-        slot = TimeSlot.objects.create(
-            resource_id=entity.resource_id,
-            start_time=entity.start_time,
-            end_time=entity.end_time,
-            is_available=entity.is_available
-        )
-        return self._to_entity(slot)
+        try:
+            slot, created = TimeSlot.objects.get_or_create(
+                resource_id=entity.resource_id,
+                start_time=entity.start_time,
+                end_time=entity.end_time,
+                defaults={
+                    'is_available': entity.is_available
+                }
+            )
+            return self._to_entity(slot)
+        except IntegrityError:
+            # In case of a race condition where another process inserted the same slot
+            # fetch the existing one and return it instead of raising
+            try:
+                slot = TimeSlot.objects.get(resource_id=entity.resource_id, start_time=entity.start_time, end_time=entity.end_time)
+                return self._to_entity(slot)
+            except TimeSlot.DoesNotExist:
+                # re-raise original error if we can't recover
+                raise
 
     def get_by_id(self, slot_id: int) -> Optional[TimeSlotEntity]:
         try:

@@ -1,5 +1,6 @@
 from typing import List, Optional
 from datetime import datetime, timedelta
+from django.utils import timezone
 from core.domain.entities.reservation import ReservationEntity
 from core.application.interfaces.repositories import (
     ReservationRepositoryInterface,
@@ -7,6 +8,7 @@ from core.application.interfaces.repositories import (
     ResourceRepositoryInterface,
     TimeSlotRepositoryInterface
 )
+from django.db import transaction
 
 
 class ReservationService:
@@ -36,24 +38,40 @@ class ReservationService:
         if not timeslot:
             raise ValueError(f"TimeSlot {timeslot_id} не съществува")
 
-        if not timeslot.can_be_reserved():
-            raise ValueError("TimeSlot не може да се резервира")
+        # Provide more specific errors so frontend can show actionable messages
+        if not timeslot.is_available:
+            raise ValueError("TimeSlot е затворен за резервации")
+        if timeslot.is_in_past():
+            raise ValueError("TimeSlot е в миналото и не може да се резервира")
 
-        current_count = self.reservation_repo.count_by_timeslot(timeslot_id, 'ACTIVE')
+        # perform create and potential timeslot update atomically
+        with transaction.atomic():
+            current_count = self.reservation_repo.count_by_timeslot(timeslot_id, 'ACTIVE')
 
-        if not resource.can_accept_reservations(current_count):
-            raise ValueError("TimeSlot е пълен")
+            if not resource.can_accept_reservations(current_count):
+                raise ValueError("TimeSlot е пълен")
 
-        entity = ReservationEntity(
-            id=None,
-            user_id=user_id,
-            resource_id=resource_id,
-            time_slot_id=timeslot_id,
-            status='ACTIVE',
-            notes=notes
-        )
+            entity = ReservationEntity(
+                id=None,
+                user_id=user_id,
+                resource_id=resource_id,
+                time_slot_id=timeslot_id,
+                status='ACTIVE',
+                notes=notes
+            )
 
-        return self.reservation_repo.create(entity)
+            reservation = self.reservation_repo.create(entity)
+
+            # After creating, re-check count and close timeslot if it reached max_bookings
+            new_count = self.reservation_repo.count_by_timeslot(timeslot_id, 'ACTIVE')
+            if not resource.can_accept_reservations(new_count):
+                # fetch timeslot and mark unavailable
+                timeslot = self.timeslot_repo.get_by_id(timeslot_id)
+                if timeslot and timeslot.is_available:
+                    timeslot.is_available = False
+                    self.timeslot_repo.update(timeslot)
+
+            return reservation
 
     def get_user_reservations(self, user_id: int, status: Optional[str] = None) -> List[ReservationEntity]:
         return self.reservation_repo.list_by_user(user_id, status)
@@ -69,7 +87,8 @@ class ReservationService:
                 raise ValueError("Нямаш права да отменяш тази резервация")
 
         timeslot = self.timeslot_repo.get_by_id(reservation.time_slot_id)
-        if timeslot and timeslot.start_time - datetime.now() < timedelta(hours=1):
+        # compare using timezone-aware now to avoid naive/aware comparison errors
+        if timeslot and timeslot.start_time - timezone.now() < timedelta(hours=1):
             raise ValueError("Не може да отменяш по-малко от 1 час преди началото")
 
         reservation.cancel()

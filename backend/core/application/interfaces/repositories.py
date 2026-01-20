@@ -45,7 +45,7 @@ class ResourceRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    def list_all(self, type_filter: Optional[str] = None) -> List[ResourceEntity]:
+    def list_all(self, type_filter: Optional[str] = None, owner_id: Optional[int] = None) -> List[ResourceEntity]:
         pass
 
     @abstractmethod

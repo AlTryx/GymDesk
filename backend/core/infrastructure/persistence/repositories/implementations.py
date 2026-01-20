@@ -218,6 +218,12 @@ class ReservationRepository(ReservationRepositoryInterface):
             queryset = queryset.filter(status=status)
         return [self._to_entity(r) for r in queryset.order_by('-created_at')]
 
+    def list_all(self, status: Optional[str] = None) -> List[ReservationEntity]:
+        queryset = Reservation.objects.all()
+        if status:
+            queryset = queryset.filter(status=status)
+        return [self._to_entity(r) for r in queryset.order_by('-created_at')]
+
     def list_by_timeslot(self, timeslot_id: int, status: str = 'ACTIVE') -> List[ReservationEntity]:
         queryset = Reservation.objects.filter(time_slot_id=timeslot_id, status=status)
         return [self._to_entity(r) for r in queryset]

@@ -132,6 +132,15 @@ export function getCurrentUserId(): number | null {
   return v ? parseInt(v, 10) : null;
 }
 
+export function setCurrentUserRole(role: string | null) {
+  if (role) localStorage.setItem('gd_user_role', role);
+  else localStorage.removeItem('gd_user_role');
+}
+
+export function getCurrentUserRole(): string | null {
+  return localStorage.getItem('gd_user_role');
+}
+
 export function setRefreshToken(token: string | null) {
   if (token) localStorage.setItem('gd_refresh', token);
   else localStorage.removeItem('gd_refresh');
@@ -153,6 +162,7 @@ export const authApi = {
     if (res.access) setAccessToken(res.access as string);
     if (res.refresh) setRefreshToken(res.refresh as string);
     if (res.user_id) setCurrentUserId(res.user_id as number);
+    if (res.role) setCurrentUserRole(res.role as string);
     return res;
   },
 
@@ -165,6 +175,7 @@ export const authApi = {
     if (res.access) setAccessToken(res.access as string);
     if (res.refresh) setRefreshToken(res.refresh as string);
     if (res.user_id) setCurrentUserId(res.user_id as number);
+    if (res.role) setCurrentUserRole(res.role as string);
     return res;
   },
 };

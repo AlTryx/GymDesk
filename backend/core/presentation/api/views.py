@@ -47,8 +47,12 @@ def create_reservation(request):
 def list_user_reservations(request):
     try:
         status_filter = request.GET.get('status')
-        user_id = request.user.id
-        reservations = reservation_service.get_user_reservations(user_id, status_filter)
+        # If admin, list ALL reservations; otherwise only the authenticated user's
+        if getattr(request.user, 'role', None) == 'ADMIN':
+            reservations = reservation_repo.list_all(status_filter)
+        else:
+            user_id = request.user.id
+            reservations = reservation_service.get_user_reservations(user_id, status_filter)
 
         return Response({'success': True, 'reservations': [ReservationSerializer.to_dict(r) for r in reservations]})
     except Exception as e:
@@ -76,9 +80,8 @@ def cancel_reservation(request, reservation_id):
 def list_resources(request):
     try:
         type_filter = request.GET.get('type')
-        # owner is the authenticated user
-        owner_id = request.user.id
-        resources = resource_service.list_resources(type_filter, owner_id)
+        # Resources are gym-owned and visible to all users. Only admins can create them.
+        resources = resource_service.list_resources(type_filter, None)
 
         return Response({'success': True, 'resources': [ResourceSerializer.to_dict(r) for r in resources]})
     except Exception as e:
@@ -90,14 +93,17 @@ def list_resources(request):
 def create_resource(request):
     try:
         data = request.data if hasattr(request, 'data') else json.loads(request.body)
-        owner_id = request.user.id
+        # Only admins may create resources (resources are gym-owned)
+        if not getattr(request.user, 'role', None) == 'ADMIN':
+            return Response({'success': False, 'error': 'Неавторизирано: само администратор може да добавя ресурси'}, status=status.HTTP_403_FORBIDDEN)
 
+        # Create as global gym resource (owner stays null)
         resource = resource_service.create_resource(
             name=data['name'],
             type=data['type'],
             max_bookings=data['max_bookings'],
             color_code=data['color_code'],
-            owner_id=owner_id
+            owner_id=None
         )
 
         return Response({'success': True, 'resource': ResourceSerializer.to_dict(resource)}, status=status.HTTP_201_CREATED)
@@ -117,10 +123,14 @@ def generate_timeslots(request):
         end_date = datetime.fromisoformat(data['end_date'])
         duration = data.get('duration_minutes', 60)
 
-        # ensure resource belongs to user
+        # Only admins may generate timeslots for resources
+        if not getattr(request.user, 'role', None) == 'ADMIN':
+            return Response({'success': False, 'error': 'Неавторизирано: само администратор може да генерира слотове'}, status=status.HTTP_403_FORBIDDEN)
+
+        # ensure resource exists
         resource = resource_service.get_resource(resource_id)
-        if not resource or resource.owner_id != request.user.id:
-            return Response({'success': False, 'error': 'Resource не съществува или нямате достъп'}, status=status.HTTP_403_FORBIDDEN)
+        if not resource:
+            return Response({'success': False, 'error': 'Resource не съществува'}, status=status.HTTP_404_NOT_FOUND)
 
         resource_service.generate_timeslots(resource_id, start_date, end_date, duration)
 
@@ -142,10 +152,10 @@ def list_timeslots(request):
             date = datetime.fromisoformat(date_str)
             timeslots = timeslot_repo.list_by_date(date)
         elif resource_id:
-            # ensure resource belongs to user
+            # Resources are visible to all users; just ensure the resource exists
             res = resource_repo.get_by_id(int(resource_id))
-            if not res or res.owner_id != request.user.id:
-                return Response({'success': False, 'error': 'Resource not found or access denied'}, status=status.HTTP_403_FORBIDDEN)
+            if not res:
+                return Response({'success': False, 'error': 'Resource not found'}, status=status.HTTP_404_NOT_FOUND)
             timeslots = timeslot_repo.list_by_resource(int(resource_id))
         else:
             return Response({'success': False, 'error': 'Provide resource_id or date'}, status=status.HTTP_400_BAD_REQUEST)

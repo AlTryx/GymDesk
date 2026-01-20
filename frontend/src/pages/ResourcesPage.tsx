@@ -105,12 +105,14 @@ export default function ResourcesPage() {
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Добави ресурс
-            </Button>
-          </DialogTrigger>
+          {auth.role === 'ADMIN' && (
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Добави ресурс
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Добавяне на ресурс</DialogTitle>
@@ -278,10 +280,12 @@ export default function ResourcesPage() {
                     ? "Няма добавени зали"
                     : "Няма добавени уреди"}
               </p>
-              <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Добави ресурс
-              </Button>
+              {auth.role === 'ADMIN' && (
+                <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Добави ресурс
+                </Button>
+              )}
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

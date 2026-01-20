@@ -28,6 +28,7 @@ def register(request):
         "refresh": str(refresh),
         "access": str(refresh.access_token),
         "user_id": user.id,
+        "role": user.role,
     })
 
 @api_view(["POST"])
@@ -46,5 +47,6 @@ def login(request):
         "success": True,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
-        "user_id": user.id
+        "user_id": user.id,
+        "role": user.role
     })

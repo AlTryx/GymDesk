@@ -99,6 +99,10 @@ class ReservationRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    def list_all(self, status: Optional[str] = None) -> List[ReservationEntity]:
+        pass
+
+    @abstractmethod
     def list_by_timeslot(self, timeslot_id: int, status: str = 'ACTIVE') -> List[ReservationEntity]:
         pass
 

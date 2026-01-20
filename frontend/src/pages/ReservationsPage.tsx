@@ -59,41 +59,7 @@ export default function ReservationsPage() {
     retry: false,
   });
 
-  // Pre-generate timeslots for all resources for the next N days when the page loads.
-  // This ensures users can navigate any future date without triggering on-demand generation.
-  const generatedRef = useRef<Set<number>>(new Set());
-  useEffect(() => {
-    if (resourcesLoading) return;
-    const resources = resourcesData?.resources || [];
-    if (!resources.length) return;
-
-    (async () => {
-      const start = new Date();
-      const end = new Date();
-      end.setDate(end.getDate() + 30); // pre-generate 30 days ahead
-
-      for (const r of resources) {
-        if (generatedRef.current.has(r.id)) continue;
-        try {
-          await timeslotsApi.generate({
-            resource_id: r.id,
-            start_date: start.toISOString(),
-            end_date: end.toISOString(),
-            duration_minutes: 60,
-          });
-          generatedRef.current.add(r.id);
-        } catch (err: any) {
-          // non-blocking: show a toast for visibility but continue with others
-          toast({ title: "Грешка при генериране", description: err?.message || 'Неуспешно генериране на часови слотове', variant: 'destructive' });
-        }
-      }
-
-      // After attempting generation for all resources, invalidate queries so UI refreshes
-      queryClient.invalidateQueries({ queryKey: ["timeslots"] });
-      queryClient.invalidateQueries({ queryKey: ["reservations"] });
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resourcesLoading, resourcesData, queryClient, toast]);
+  // Timeslot generation is manual and only available to admins via resource controls.
 
   // Create reservation mutation
   const createMutation = useMutation({

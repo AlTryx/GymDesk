@@ -15,6 +15,12 @@ class User(AbstractUser):
 
     class Meta:
         db_table = 'users'
+    
+    def save(self, *args, **kwargs):
+        # Ensure superusers are marked as ADMIN role so front-end role checks work
+        if self.is_superuser and self.role != 'ADMIN':
+            self.role = 'ADMIN'
+        super().save(*args, **kwargs)
 
 
 class Resource(models.Model):

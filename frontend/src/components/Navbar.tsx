@@ -55,7 +55,6 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-2">
             {auth.isAuthenticated ? (
               <>
-                <div className="text-sm text-muted-foreground mr-2">Потребител #{auth.userId}</div>
                 <Button variant="outline" size="sm" className="gap-2" onClick={() => auth.logout()}>
                   <LogOut className="h-4 w-4" />
                   Изход

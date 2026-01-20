@@ -91,7 +91,6 @@ export default function ReservationsPage() {
       // After attempting generation for all resources, invalidate queries so UI refreshes
       queryClient.invalidateQueries({ queryKey: ["timeslots"] });
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
-      toast({ title: "Часове подготвени", description: "Часовете за следващите 30 дни бяха подготвени." });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourcesLoading, resourcesData, queryClient, toast]);

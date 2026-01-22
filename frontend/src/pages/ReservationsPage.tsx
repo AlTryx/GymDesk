@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ReservationCard } from "@/components/ReservationCard";
 import { ResourceCard } from "@/components/ResourceCard";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
+import { ExportControls } from "@/components/ExportControls";
 import { reservationsApi, resourcesApi, timeslotsApi, type Resource, type TimeSlot } from "@/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -141,14 +142,16 @@ export default function ReservationsPage() {
             Управлявайте вашите резервации и създавайте нови
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Нова резервация
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex gap-2">
+          <ExportControls />
+          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Нова резервация
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Създаване на резервация</DialogTitle>
               <DialogDescription>
@@ -328,8 +331,9 @@ export default function ReservationsPage() {
                 </DialogFooter>
               </div>
             )}
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Tabs */}

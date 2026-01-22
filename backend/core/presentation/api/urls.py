@@ -17,4 +17,8 @@ urlpatterns = [
 
     path('timeslots/', views.list_timeslots, name='list_timeslots'),
     path('timeslots/generate/', views.generate_timeslots, name='generate_timeslots'),
+    
+    # Export endpoints
+    path('export/weekly-schedule-print/', views.export_weekly_schedule_print, name='export_weekly_schedule_print'),
+    path('export/calendar.ics', views.export_calendar_ics, name='export_calendar_ics'),
 ]

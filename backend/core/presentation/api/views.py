@@ -5,11 +5,13 @@ from rest_framework import status
 import json
 from core.application.services.reservation_service import ReservationService
 from core.application.services.resource_service import ResourceService
+from core.application.services.export_service import WeeklySchedulePrintService, ICalendarExportService
 from core.infrastructure.persistence.repositories.implementations import (
     UserRepository, ResourceRepository, TimeSlotRepository, ReservationRepository
 )
 from core.presentation.api.serializers import ReservationSerializer, ResourceSerializer, TimeSlotSerializer
 from datetime import datetime
+from django.http import HttpResponse
 
 
 user_repo = UserRepository()
@@ -19,6 +21,10 @@ reservation_repo = ReservationRepository()
 
 reservation_service = ReservationService(reservation_repo, user_repo, resource_repo, timeslot_repo)
 resource_service = ResourceService(resource_repo, timeslot_repo)
+
+# Export services
+weekly_schedule_service = WeeklySchedulePrintService(reservation_repo, resource_repo, timeslot_repo, user_repo)
+icalendar_service = ICalendarExportService(reservation_repo, user_repo)
 
 
 @api_view(['POST'])
@@ -163,3 +169,99 @@ def list_timeslots(request):
         return Response({'success': True, 'timeslots': [TimeSlotSerializer.to_dict(t) for t in timeslots]})
     except Exception as e:
         return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ======================== Export Endpoints ========================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def export_weekly_schedule_print(request):
+    """
+    Export user's weekly schedule as HTML/printable format.
+    Query params: start_date (YYYY-MM-DD), end_date (YYYY-MM-DD)
+    """
+    try:
+        user_id = request.user.id
+        
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        
+        if not start_date_str or not end_date_str:
+            return Response(
+                {'success': False, 'error': 'start_date и end_date са задължителни (YYYY-MM-DD формат)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        except ValueError:
+            return Response(
+                {'success': False, 'error': 'Невалиден формат на дата. Използвайте YYYY-MM-DD'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        html_content = weekly_schedule_service.export(user_id, start_date, end_date)
+        
+        response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
+        response['Content-Disposition'] = f'inline; filename="sedmichnia_grafik_{start_date_str}_do_{end_date_str}.html"'
+        
+        return response
+        
+    except ValueError as e:
+        return Response(
+            {'success': False, 'error': str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        return Response(
+            {'success': False, 'error': f'Грешка при експорт: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def export_calendar_ics(request):
+    """
+    Export user's reservations as iCalendar (.ics) file.
+    Query params: start_date (YYYY-MM-DD), end_date (YYYY-MM-DD)
+    """
+    try:
+        user_id = request.user.id
+        
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        
+        if not start_date_str or not end_date_str:
+            return Response(
+                {'success': False, 'error': 'start_date и end_date са задължителни (YYYY-MM-DD формат)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        except ValueError:
+            return Response(
+                {'success': False, 'error': 'Невалиден формат на дата. Използвайте YYYY-MM-DD'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        ics_content = icalendar_service.export(user_id, start_date, end_date)
+        
+        response = HttpResponse(ics_content, content_type='text/calendar; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="gymdesk_calendar_{start_date_str}_do_{end_date_str}.ics"'
+        
+        return response
+        
+    except ValueError as e:
+        return Response(
+            {'success': False, 'error': str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        return Response(
+            {'success': False, 'error': f'Грешка при експорт: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

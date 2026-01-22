@@ -320,3 +320,86 @@ export const timeslotsApi = {
     });
   },
 };
+
+// Export API
+export const exportApi = {
+  /**
+   * Export weekly schedule as printable HTML
+   */
+  weeklySchedulePrint: async (startDate: string, endDate: string): Promise<void> => {
+    try {
+      const token = getAccessToken();
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      const url = `${API_BASE_URL}/export/weekly-schedule-print/?start_date=${startDate}&end_date=${endDate}`;
+      const response = await fetch(url, {
+        headers: {
+          ...authHeader,
+        },
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        let errorMsg = `HTTP ${response.status}`;
+        try {
+          const data = JSON.parse(text);
+          errorMsg = data.error || errorMsg;
+        } catch (e) {
+          // Ignore parse error, use generic message
+        }
+        throw new Error(errorMsg);
+      }
+
+      // Open in new window/tab for printing
+      const blob = await response.blob();
+      const url_obj = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url_obj;
+      link.target = '_blank';
+      link.click();
+      window.URL.revokeObjectURL(url_obj);
+    } catch (error) {
+      throw new Error(`Грешка при експорт на график: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+
+  /**
+   * Export reservations as iCalendar (.ics) file for importing into calendar apps
+   */
+  calendarIcs: async (startDate: string, endDate: string): Promise<void> => {
+    try {
+      const token = getAccessToken();
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      const url = `${API_BASE_URL}/export/calendar.ics?start_date=${startDate}&end_date=${endDate}`;
+      const response = await fetch(url, {
+        headers: {
+          ...authHeader,
+        },
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        let errorMsg = `HTTP ${response.status}`;
+        try {
+          const data = JSON.parse(text);
+          errorMsg = data.error || errorMsg;
+        } catch (e) {
+          // Ignore parse error, use generic message
+        }
+        throw new Error(errorMsg);
+      }
+
+      // Download the .ics file
+      const blob = await response.blob();
+      const url_obj = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url_obj;
+      link.download = `gymdesk_calendar_${startDate}_do_${endDate}.ics`;
+      link.click();
+      window.URL.revokeObjectURL(url_obj);
+    } catch (error) {
+      throw new Error(`Грешка при експорт на календар: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+};

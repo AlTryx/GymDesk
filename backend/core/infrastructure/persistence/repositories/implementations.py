@@ -218,6 +218,25 @@ class ReservationRepository(ReservationRepositoryInterface):
             queryset = queryset.filter(status=status)
         return [self._to_entity(r) for r in queryset.order_by('-created_at')]
 
+    def list_by_user_and_date_range(
+        self,
+        user_id: int,
+        start_date: datetime,
+        end_date: datetime,
+        status: Optional[str] = None
+    ) -> List[ReservationEntity]:
+        """List reservations for user within date range, with full related objects."""
+        queryset = Reservation.objects.filter(
+            user_id=user_id,
+            time_slot__start_time__gte=start_date,
+            time_slot__end_time__lte=end_date
+        ).select_related('time_slot', 'resource', 'user')
+        
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        return [self._to_entity_with_relations(r) for r in queryset.order_by('time_slot__start_time')]
+
     def list_all(self, status: Optional[str] = None) -> List[ReservationEntity]:
         queryset = Reservation.objects.all()
         if status:
@@ -255,3 +274,12 @@ class ReservationRepository(ReservationRepositoryInterface):
             notes=model.notes,
             created_at=model.created_at
         )
+    
+    def _to_entity_with_relations(self, model: Reservation) -> ReservationEntity:
+        """Convert model with loaded related objects (timeslot, resource, user)."""
+        entity = self._to_entity(model)
+        # Attach related objects for use in export services
+        entity.time_slot = model.time_slot
+        entity.resource = model.resource
+        entity.user = model.user
+        return entity

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { format, enUS } from "date-fns";
+import { format } from "date-fns";
+import { enUS } from "date-fns/locale";
 import { Calendar, Download, Printer, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +33,9 @@ export const ExportControls = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(
     new Date(new Date().setDate(new Date().getDate() - 7))
   );
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    new Date(new Date().setDate(new Date().getDate() + 7))
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const validateDateRange = (): boolean => {
@@ -54,7 +57,7 @@ export const ExportControls = () => {
     try {
       const startStr = format(startDate!, "yyyy-MM-dd");
       const endStr = format(endDate!, "yyyy-MM-dd");
-      
+
       await exportApi.weeklySchedulePrint(startStr, endStr);
       handleExportSuccess("print");
       setIsDialogOpen(false);
@@ -70,7 +73,7 @@ export const ExportControls = () => {
     try {
       const startStr = format(startDate!, "yyyy-MM-dd");
       const endStr = format(endDate!, "yyyy-MM-dd");
-      
+
       await exportApi.calendarIcs(startStr, endStr);
       handleExportSuccess("calendar");
       setIsDialogOpen(false);

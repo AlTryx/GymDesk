@@ -124,57 +124,56 @@ export function ResourceCard({ resource, onSelect, isSelected }: ResourceCardPro
         </div>
 
         {onSelect && (
-          <div className="mt-2 flex gap-2">
+          <div className="mt-4 space-y-2">
             {auth.role === 'ADMIN' && (
-              <>
-                <Dialog open={isDialogOpen} onOpenChange={(open) => setIsDialogOpen(open)}>
-                  <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => { e.stopPropagation(); setIsDialogOpen(true); }}
-                    >
-                      Генерирай часове
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent onClick={(e) => e.stopPropagation()}>
-                    <DialogHeader>
-                      <DialogTitle>Генериране на слотове</DialogTitle>
-                      <DialogDescription>Изберете период и продължителност за генериране на часови слотове.</DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleDialogSubmit} className="space-y-4 py-2">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`start-${resource.id}`}>Начална дата</Label>
-                          <Input id={`start-${resource.id}`} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
-                        </div>
-                        <div>
-                          <Label htmlFor={`end-${resource.id}`}>Крайна дата</Label>
-                          <Input id={`end-${resource.id}`} type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
-                        </div>
-                      </div>
-
+              <Dialog open={isDialogOpen} onOpenChange={(open) => setIsDialogOpen(open)}>
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={(e) => { e.stopPropagation(); setIsDialogOpen(true); }}
+                  >
+                    Генерирай часове
+                  </Button>
+                </DialogTrigger>
+                <DialogContent onClick={(e) => e.stopPropagation()}>
+                  <DialogHeader>
+                    <DialogTitle>Генериране на слотове</DialogTitle>
+                    <DialogDescription>Изберете период и продължителност за генериране на часови слотове.</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleDialogSubmit} className="space-y-4 py-2">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor={`duration-${resource.id}`}>Продължителност (минути)</Label>
-                        <select id={`duration-${resource.id}`} value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full rounded-md border px-3 py-2">
-                          {[15, 30, 45, 60, 90, 120].map((d) => (
-                            <option key={d} value={d}>{d} мин</option>
-                          ))}
-                        </select>
+                        <Label htmlFor={`start-${resource.id}`}>Начална дата</Label>
+                        <Input id={`start-${resource.id}`} type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
                       </div>
+                      <div>
+                        <Label htmlFor={`end-${resource.id}`}>Крайна дата</Label>
+                        <Input id={`end-${resource.id}`} type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
+                      </div>
+                    </div>
 
-                      <DialogFooter>
-                        <Button type="submit" disabled={isSubmitting} className="gap-2">
-                          {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Генериране...</>) : ("Генерирай")}
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </>
+                    <div>
+                      <Label htmlFor={`duration-${resource.id}`}>Продължителност (минути)</Label>
+                      <select id={`duration-${resource.id}`} value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full rounded-md border px-3 py-2">
+                        {[15, 30, 45, 60, 90, 120].map((d) => (
+                          <option key={d} value={d}>{d} мин</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <DialogFooter>
+                      <Button type="submit" disabled={isSubmitting} className="gap-2">
+                        {isSubmitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Генериране...</>) : ("Генерирай")}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             )}
             <Button
-              className="flex-1 gap-2"
+              className="w-full gap-2"
               style={{
                 backgroundColor: resource.color_code,
                 color: "#fff",

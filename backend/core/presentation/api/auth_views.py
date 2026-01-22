@@ -29,7 +29,7 @@ def register(request):
         "access": str(refresh.access_token),
         "user_id": user.id,
         "role": user.role,
-    })
+    }, status=status.HTTP_201_CREATED)
 
 @api_view(["POST"])
 def login(request):

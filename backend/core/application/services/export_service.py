@@ -18,10 +18,6 @@ from core.infrastructure.persistence.repositories.implementations import (
 
 
 class WeeklySchedulePrintService(ScheduleExportInterface):
-    """
-    Generates HTML/PDF printable weekly schedule.
-    Implements single responsibility principle - handles only PDF generation.
-    """
     
     def __init__(
         self,
@@ -36,10 +32,6 @@ class WeeklySchedulePrintService(ScheduleExportInterface):
         self.user_repo = user_repo
     
     def export(self, user_id: int, start_date: datetime, end_date: datetime) -> bytes:
-        """
-        Generate HTML for weekly schedule that can be printed to PDF.
-        Returns HTML as bytes.
-        """
         if start_date > end_date:
             raise ValueError("start_date must be before end_date")
         
@@ -56,8 +48,6 @@ class WeeklySchedulePrintService(ScheduleExportInterface):
         return html.encode('utf-8')
     
     def _generate_html(self, user: Any, reservations: List[Any], start_date: datetime, end_date: datetime) -> str:
-        """Generate HTML for printable weekly schedule."""
-        
         # Group reservations by date
         by_date = self._group_by_date(reservations)
         

@@ -18,7 +18,7 @@ class ReservationEntity:
         self._validate()
 
     def _validate(self):
-        # Валидация на ID-та (трябва да са положителни)
+        # Валидация на ID-та
         if self.user_id <= 0:
             raise ValueError("user_id трябва да е положително число")
 
@@ -28,11 +28,11 @@ class ReservationEntity:
         if self.time_slot_id <= 0:
             raise ValueError("time_slot_id трябва да е положително число")
 
-        # Валидация на status (от документацията: Active, Cancelled)
+        # Валидация на status
         if self.status not in ['ACTIVE', 'CANCELLED']:
             raise ValueError(f"Status трябва да е ACTIVE или CANCELLED, а не '{self.status}'")
 
-        # Валидация на notes (ако има, не може да е само whitespace)
+        # Валидация на notes
         if self.notes is not None and len(self.notes.strip()) == 0:
             self.notes = None
 
@@ -58,8 +58,10 @@ class ReservationEntity:
         return self.notes is not None and len(self.notes) > 0
 
     def update_notes(self, new_notes: str) -> None:
-        # Ако е празен string, запази като None
         if not new_notes or len(new_notes.strip()) == 0:
             self.notes = None
         else:
             self.notes = new_notes.strip()
+
+    def __str__(self) -> str:
+        return f"Reservation #{self.id} ({self.status})"

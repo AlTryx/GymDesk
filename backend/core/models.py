@@ -22,6 +22,9 @@ class User(AbstractUser):
             self.role = 'ADMIN'
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return self.email
+
 
 class Resource(models.Model):
     # Owner of the resource; nullable to allow existing resources to remain global
@@ -39,6 +42,9 @@ class Resource(models.Model):
     class Meta:
         db_table = 'resources'
 
+    def __str__(self):
+        return self.name
+
 
 class TimeSlot(models.Model):
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='time_slots')
@@ -49,6 +55,9 @@ class TimeSlot(models.Model):
     class Meta:
         db_table = 'time_slots'
         unique_together = ['resource', 'start_time', 'end_time']
+
+    def __str__(self):
+        return f"{self.resource.name}: {self.start_time.strftime('%Y-%m-%d %H:%M')} - {self.end_time.strftime('%H:%M')}"
 
 
 class Reservation(models.Model):
@@ -65,3 +74,6 @@ class Reservation(models.Model):
 
     class Meta:
         db_table = 'reservations'
+
+    def __str__(self):
+        return f"{self.user.email} - {self.resource.name} ({self.time_slot.start_time.strftime('%Y-%m-%d %H:%M')})"

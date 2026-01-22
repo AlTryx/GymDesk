@@ -2,3 +2,9 @@ Django>=4.2
 djangorestframework
 djangorestframework-simplejwt
 django-cors-headers
+
+# Testing dependencies
+pytest>=7.0.0
+pytest-django>=4.5.0
+pytest-cov>=4.0.0
+coverage>=7.0.0

@@ -204,7 +204,7 @@ def export_weekly_schedule_print(request):
         html_content = weekly_schedule_service.export(user_id, start_date, end_date)
         
         response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
-        response['Content-Disposition'] = f'inline; filename="sedmichnia_grafik_{start_date_str}_do_{end_date_str}.html"'
+        response['Content-Disposition'] = f'attachment; filename="sedmichnia_grafik_{start_date_str}_do_{end_date_str}.html"'
         
         return response
         

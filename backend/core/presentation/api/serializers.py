@@ -40,7 +40,7 @@ class TimeSlotSerializer:
             'start_time': entity.start_time.isoformat(),
             'end_time': entity.end_time.isoformat(),
             'is_available': entity.is_available,
-            'duration_minutes': entity.duration_minutes()
+            'duration_minutes': entity.duration_minutes
         }
 
 

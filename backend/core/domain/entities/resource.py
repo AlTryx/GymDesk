@@ -46,3 +46,6 @@ class ResourceEntity:
     def get_available_spots(self, current_reservations_count: int) -> int:
         return max(0, self.max_bookings - current_reservations_count)
 
+    def __str__(self) -> str:
+        return f"{self.name} ({self.type})"
+

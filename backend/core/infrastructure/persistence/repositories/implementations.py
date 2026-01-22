@@ -142,8 +142,7 @@ class TimeSlotRepository(TimeSlotRepositoryInterface):
             )
             return self._to_entity(slot)
         except IntegrityError:
-            # In case of a race condition where another process inserted the same slot
-            # fetch the existing one and return it instead of raising
+            # In case of a race condition where another process inserted the same slot fetch the existing one and return it instead of raising
             try:
                 slot = TimeSlot.objects.get(resource_id=entity.resource_id, start_time=entity.start_time, end_time=entity.end_time)
                 return self._to_entity(slot)
@@ -225,7 +224,6 @@ class ReservationRepository(ReservationRepositoryInterface):
         end_date: datetime,
         status: Optional[str] = None
     ) -> List[ReservationEntity]:
-        """List reservations for user within date range, with full related objects."""
         queryset = Reservation.objects.filter(
             user_id=user_id,
             time_slot__start_time__gte=start_date,
@@ -276,7 +274,6 @@ class ReservationRepository(ReservationRepositoryInterface):
         )
     
     def _to_entity_with_relations(self, model: Reservation) -> ReservationEntity:
-        """Convert model with loaded related objects (timeslot, resource, user)."""
         entity = self._to_entity(model)
         # Attach related objects for use in export services
         entity.time_slot = model.time_slot

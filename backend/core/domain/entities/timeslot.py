@@ -23,27 +23,29 @@ class TimeSlotEntity:
         self._validate()
 
     def _validate(self):
-        # Валидация на времена
         if self.start_time >= self.end_time:
             raise ValueError("start_time трябва да е преди end_time")
 
-        # Валидация че не е прекалено дълъг (например повече от 24 часа)
         duration = (self.end_time - self.start_time).total_seconds() / 3600
         if duration > 24:
             raise ValueError("TimeSlot не може да е повече от 24 часа")
-
-        # Валидация че не е прекалено кратък (поне 15 минути)
+        
         if duration < 0.25:
             raise ValueError("TimeSlot трябва да е поне 15 минути")
 
-        #Resource Id трябва да е положително число
         if self.resource_id <= 0:
             raise ValueError("resource_id трябва да е положително число")
 
     def is_in_past(self, current_time: Optional[datetime] = None) -> bool:
         if current_time is None:
-            # use Django timezone-aware now to avoid mixing naive/aware datetimes
             current_time = timezone.now()
+
+        # If start_time is naive, make current_time naive for comparison
+        if timezone.is_naive(self.start_time) and timezone.is_aware(current_time):
+            current_time = timezone.make_naive(current_time)
+        # If start_time is aware, make current_time aware for comparison
+        elif timezone.is_aware(self.start_time) and timezone.is_naive(current_time):
+            current_time = timezone.make_aware(current_time, timezone.get_current_timezone())
 
         return self.start_time < current_time
 
@@ -53,6 +55,7 @@ class TimeSlotEntity:
     def can_be_reserved(self, current_time: Optional[datetime] = None) -> bool:
         return self.is_available and self.is_in_future(current_time)
 
+    @property
     def duration_minutes(self):
         delta_time = self.end_time - self.start_time
         return int(delta_time.total_seconds() / 60)
@@ -72,3 +75,6 @@ class TimeSlotEntity:
         if self.is_available:
             raise ValueError("Слотът вече е отворен")
         self.is_available = True
+
+    def __str__(self) -> str:
+        return f"{self.start_time.strftime('%Y-%m-%d %H:%M')} - {self.end_time.strftime('%H:%M')} ({self.duration_minutes} min)"
